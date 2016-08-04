@@ -2,7 +2,7 @@
 # coding=utf-8
 
 import os
-import clara
+import clara_std
 from distutils.core import setup, Command
 from setuptools.command.test import test as TestCommand
 from setuptools import find_packages
@@ -42,7 +42,8 @@ with open(os.path.join(os.path.dirname(__file__), 'LICENSE')) as license_file:
     LICENSE = license_file.read()
 
 if __name__ == "__main__":
-    setup(name='clara-std-services',
+    setup(name='clara_std-services',
+          version=clara_std.__version__,
           description='Clara standard services for python',
           author='Ricardo Oyarzun',
           author_email='oyarzun@jlab.org',
