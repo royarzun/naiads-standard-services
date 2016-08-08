@@ -2,6 +2,7 @@
 
 import json
 from array import *
+from time import strftime
 
 from clara.base.ClaraUtils import ClaraUtils
 from clara.engine.EngineDataType import EngineDataType, Mimetype
@@ -29,14 +30,17 @@ class Histogram1dWriterService(Engine):
 
         if engine_data.mimetype == Mimetype.STRING:
             json_object = json.loads(engine_data.get_data())
-            lower_limit = float(json_object["xAxis"]["centers"][0])
-            upper_limit = float(json_object["xAxis"]["centers"][99])
-            histo = TH1F("example", "example", 100, lower_limit, upper_limit)
-            histo.SetContent(self._convertToRootArray(json_object["counts"]))
-            histo.SetError(self._convertToRootArray(json_object["errors"]))
 
-            histo.SaveAs("histos.root")
+            limits = self._get_limits(json_object["xAxis"]["centers"])
+            histo_name = json_object["annotation"]["Title"]
+
+            histo = TH1F("histogram", histo_name, 100, limits[0], limits[1])
+            histo.SetContent(self._convert_to_root_array(json_object["counts"]))
+            histo.SetError(self._convert_to_root_array(json_object["errors"]))
+
+            histo.SaveAs(self._create_filename(histo_name))
             return histo
+
         return None
 
     def execute_group(self, inputs):
@@ -58,5 +62,12 @@ class Histogram1dWriterService(Engine):
     def configure(self, engine_data):
         return None
 
-    def _convertToRootArray(self, list_array):
+    def _convert_to_root_array(self, list_array):
         return array('d', list_array)
+
+    def _create_filename(self, hname):
+        timestamp_str = strftime("%Y%m%d%H%M%S")
+        return hname + "_" + timestamp_str + ".root"
+
+    def _get_limits(self, list_array):
+        return [float(list_array[0]), float(list_array[-1])]
