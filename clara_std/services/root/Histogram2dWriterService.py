@@ -1,14 +1,13 @@
 # coding=utf-8
 
 import json
-from array import *
 from time import strftime
+
+from ROOT import TH2F
 
 from clara.base.ClaraUtils import ClaraUtils
 from clara.engine.EngineDataType import EngineDataType, Mimetype
 from clara.engine.Engine import Engine
-
-from ROOT import TH2F
 
 
 class Histogram2dWriterService(Engine):
@@ -17,11 +16,10 @@ class Histogram2dWriterService(Engine):
         return "Ricardo Oyarzun <oyarzun@jlab.org>"
 
     def get_description(self):
-        return "2D Histogram writer services, writes a ROOT file with" \
-               " event histogram"
+        return "2D Histogram writer service, writes a ROOT file with histogram"
 
     def get_states(self):
-        return None
+        pass
 
     def get_output_data_types(self):
         return ClaraUtils.build_data_types(EngineDataType.STRING())
@@ -34,27 +32,31 @@ class Histogram2dWriterService(Engine):
             x_limits = self._get_limits(json_object["xAxis"]["centers"])
             y_limits = self._get_limits(json_object["yAxis"]["centers"])
 
-            histo_name = json_object["annotation"]["Title"]
-            histo = TH2F("histogram", histo_name, 100, x_limits[0], x_limits[1], 100, y_limits[0], y_limits[1])
+            histogram_name = json_object["annotation"]["Title"]
+            histogram = TH2F("histogram",
+                             histogram_name,
+                             100, x_limits[0], x_limits[1],
+                             100, y_limits[0], y_limits[1])
 
-            for i,i_count in zip(json_object["xAxis"]["centers"], json_object["counts"]):
-                for j,val in zip(json_object["yAxis"]["centers"], i_count):
-                    histo.Fill(i,j,val)
+            for i, i_count in zip(json_object["xAxis"]["centers"],
+                                  json_object["counts"]):
+                for j, val in zip(json_object["yAxis"]["centers"],
+                                  i_count):
+                    histogram.Fill(i, j, val)
 
-            histo.SaveAs(self._create_filename(histo_name))
-            return histo
+            histogram.SaveAs(self._create_filename(histogram_name))
+            return histogram
 
-        return None
+        return engine_data
 
     def execute_group(self, inputs):
-        return None
+        pass
 
     def reset(self):
-        return None
+        pass
 
     def destroy(self):
-        """ Histogram should be created and histo object deleted """
-        return None
+        pass
 
     def get_version(self):
         return "v1.0"
@@ -63,11 +65,11 @@ class Histogram2dWriterService(Engine):
         return ClaraUtils.build_data_types(EngineDataType.STRING())
 
     def configure(self, engine_data):
-        return None
+        pass
 
-    def _create_filename(self, hname):
+    def _create_filename(self, name_label):
         timestamp_str = strftime("%Y%m%d%H%M%S")
-        return hname + "_" + timestamp_str + ".root"
+        return name_label + "_" + timestamp_str + ".root"
 
     def _get_limits(self, list_array):
         return [float(list_array[0]), float(list_array[-1])]
