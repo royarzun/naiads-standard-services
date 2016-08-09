@@ -4,11 +4,11 @@ import json
 from array import *
 from time import strftime
 
-from clara.base.ClaraUtils import ClaraUtils
-from clara.engine.EngineDataType import EngineDataType, Mimetype
-from clara.engine.Engine import Engine
-
 from ROOT import TH1F
+
+from clara.base.ClaraUtils import ClaraUtils
+from clara.engine.Engine import Engine
+from clara.engine.EngineDataType import EngineDataType, Mimetype
 
 
 class Histogram1dWriterService(Engine):
@@ -17,11 +17,10 @@ class Histogram1dWriterService(Engine):
         return "Ricardo Oyarzun <oyarzun@jlab.org>"
 
     def get_description(self):
-        return "Histogram writer services, writes a ROOT file with" \
-               " event histogram"
+        return "1D Histogram writer service, writes a ROOT file with Histogram"
 
     def get_states(self):
-        return None
+        pass
 
     def get_output_data_types(self):
         return ClaraUtils.build_data_types(EngineDataType.STRING())
@@ -44,14 +43,13 @@ class Histogram1dWriterService(Engine):
         return None
 
     def execute_group(self, inputs):
-        return None
+        pass
 
     def reset(self):
-        return None
+        pass
 
     def destroy(self):
-        """ Histogram should be created and histo object deleted """
-        return None
+        pass
 
     def get_version(self):
         return "v1.0"
@@ -60,7 +58,7 @@ class Histogram1dWriterService(Engine):
         return ClaraUtils.build_data_types(EngineDataType.STRING())
 
     def configure(self, engine_data):
-        return None
+        pass
 
     def _convert_to_root_array(self, list_array):
         return array('d', list_array)
