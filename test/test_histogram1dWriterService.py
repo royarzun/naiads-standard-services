@@ -6,7 +6,7 @@ from ROOT import TH1F
 
 from clara.engine.EngineData import EngineData
 from clara.engine.EngineDataType import Mimetype
-from clara_std.services.root.Histogram1dWriterService import Histogram1dWriterService
+from naiads.services.root.Histogram1dWriterService import Histogram1dWriterService
 
 json_data = {
     "count": 10000933,
