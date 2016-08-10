@@ -2,7 +2,7 @@
 # coding=utf-8
 
 import os
-import clara_std
+import naiads
 from distutils.core import setup, Command
 from setuptools.command.test import test as TestCommand
 from setuptools import find_packages
@@ -42,9 +42,9 @@ with open(os.path.join(os.path.dirname(__file__), 'LICENSE')) as license_file:
     LICENSE = license_file.read()
 
 if __name__ == "__main__":
-    setup(name='clara_std-services',
-          version=clara_std.__version__,
-          description='Clara standard services for python',
+    setup(name='naiads-std-services',
+          version=naiads.__version__,
+          description='NAIADS standard services for clara-python',
           author='Ricardo Oyarzun',
           author_email='oyarzun@jlab.org',
           url='https://claraweb.jlab.org',

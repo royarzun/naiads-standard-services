@@ -6,7 +6,7 @@ from ROOT import TH2F
 from unittest import TestCase
 from clara.engine.EngineData import EngineData
 from clara.engine.EngineDataType import Mimetype
-from clara_std.services.root.Histogram2dWriterService import Histogram2dWriterService
+from naiads.services.root.Histogram2dWriterService import Histogram2dWriterService
 
 json_data = {
     "count": 30163351,
