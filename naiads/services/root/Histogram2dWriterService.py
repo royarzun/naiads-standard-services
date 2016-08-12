@@ -3,7 +3,6 @@
 import json
 
 from clara.base.ClaraUtils import ClaraUtils
-from clara.engine.EngineData import EngineData
 from clara.engine.EngineDataType import EngineDataType, Mimetype
 from clara.engine.Engine import Engine
 from clara.engine.EngineStatus import EngineStatus
