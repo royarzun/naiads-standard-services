@@ -1,8 +1,8 @@
 # coding=utf-8
+
 import json
 from unittest import TestCase
 
-from ROOT import TProfile
 from clara.engine.EngineData import EngineData
 from clara.engine.EngineDataType import Mimetype
 
@@ -135,4 +135,4 @@ class TestProfile1dWriterService(TestCase):
     def test_execute(self):
         histo_service = Profile1dWriterService()
         self.assertIsInstance(histo_service.execute(self.engine_data),
-                              TProfile)
+                              EngineData)
