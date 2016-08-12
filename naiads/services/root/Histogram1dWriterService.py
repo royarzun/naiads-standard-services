@@ -1,17 +1,20 @@
 # coding=utf-8
 
 import json
-from array import *
-from time import strftime
-
-from ROOT import TH1F
 
 from clara.base.ClaraUtils import ClaraUtils
 from clara.engine.Engine import Engine
 from clara.engine.EngineDataType import EngineDataType, Mimetype
+from ROOT import TH1F
+
+from naiads.utils.Utils import create_filename, convert_to_root_array, \
+    get_limits
 
 
 class Histogram1dWriterService(Engine):
+
+    def __init__(self):
+        pass
 
     def get_author(self):
         return "Ricardo Oyarzun <oyarzun@jlab.org>"
@@ -26,19 +29,18 @@ class Histogram1dWriterService(Engine):
         return ClaraUtils.build_data_types(EngineDataType.STRING())
 
     def execute(self, engine_data):
-
         if engine_data.mimetype == Mimetype.STRING:
             json_object = json.loads(engine_data.get_data())
 
-            limits = self._get_limits(json_object["xAxis"]["centers"])
+            limits = get_limits(json_object["xAxis"]["centers"])
             histo_name = json_object["annotation"]["Title"]
 
             histo = TH1F("histogram", histo_name, 100, limits[0], limits[1])
-            histo.SetContent(self._convert_to_root_array(json_object["counts"]))
-            histo.SetError(self._convert_to_root_array(json_object["errors"]))
+            histo.SetContent(convert_to_root_array(json_object["counts"]))
+            histo.SetError(convert_to_root_array(json_object["errors"]))
 
-            histo.SaveAs(self._create_filename(histo_name))
-            return histo
+            histo.SaveAs(create_filename(histo_name))
+            return engine_data
 
         return None
 
@@ -59,13 +61,3 @@ class Histogram1dWriterService(Engine):
 
     def configure(self, engine_data):
         pass
-
-    def _convert_to_root_array(self, list_array):
-        return array('d', list_array)
-
-    def _create_filename(self, hname):
-        timestamp_str = strftime("%Y%m%d%H%M%S")
-        return hname + "_" + timestamp_str + ".root"
-
-    def _get_limits(self, list_array):
-        return [float(list_array[0]), float(list_array[-1])]
