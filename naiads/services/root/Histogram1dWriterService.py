@@ -4,17 +4,18 @@ import json
 
 from clara.base.ClaraUtils import ClaraUtils
 from clara.engine.Engine import Engine
+from clara.engine.EngineStatus import EngineStatus
 from clara.engine.EngineDataType import EngineDataType, Mimetype
 from ROOT import TH1F
 
 from naiads.utils.Utils import create_filename, convert_to_root_array, \
-    get_limits
+    get_limits, set_output_folder
 
 
 class Histogram1dWriterService(Engine):
 
     def __init__(self):
-        pass
+        self.output_dir = "./"
 
     def get_author(self):
         return "Ricardo Oyarzun <oyarzun@jlab.org>"
@@ -35,11 +36,12 @@ class Histogram1dWriterService(Engine):
             limits = get_limits(json_object["xAxis"]["centers"])
             histo_name = json_object["annotation"]["Title"]
 
-            histo = TH1F("histogram", histo_name, 100, limits[0], limits[1])
-            histo.SetContent(convert_to_root_array(json_object["counts"]))
-            histo.SetError(convert_to_root_array(json_object["errors"]))
+            histogram = TH1F("histogram", histo_name, 100,
+                             limits[0], limits[1])
+            histogram.SetContent(convert_to_root_array(json_object["counts"]))
+            histogram.SetError(convert_to_root_array(json_object["errors"]))
 
-            histo.SaveAs(create_filename(histo_name))
+            histogram.SaveAs(create_filename(self.output_dir, histo_name))
             return engine_data
 
         return None
@@ -60,4 +62,15 @@ class Histogram1dWriterService(Engine):
         return ClaraUtils.build_data_types(EngineDataType.STRING())
 
     def configure(self, engine_data):
-        pass
+        if engine_data.mimetype == Mimetype.STRING():
+            json_object = json.loads(engine_data.get_data())
+            try:
+                self.output_dir = set_output_folder(json_object['output_dir'])
+                return engine_data
+
+            except IOError as e:
+                engine_data.status(EngineStatus.ERROR)
+                engine_data.description(e.message)
+                return engine_data
+
+        return engine_data

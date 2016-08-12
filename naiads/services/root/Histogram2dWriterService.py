@@ -3,14 +3,19 @@
 import json
 
 from clara.base.ClaraUtils import ClaraUtils
+from clara.engine.EngineData import EngineData
 from clara.engine.EngineDataType import EngineDataType, Mimetype
 from clara.engine.Engine import Engine
+from clara.engine.EngineStatus import EngineStatus
 from ROOT import TH2F
 
-from naiads.utils.Utils import create_filename, get_limits
+from naiads.utils.Utils import create_filename, get_limits, set_output_folder
 
 
 class Histogram2dWriterService(Engine):
+
+    def __init__(self):
+        self.output_dir = "./"
 
     def get_author(self):
         return "Ricardo Oyarzun <oyarzun@jlab.org>"
@@ -42,7 +47,8 @@ class Histogram2dWriterService(Engine):
                                   i_count):
                     histogram.Fill(i, j, val)
 
-            histogram.SaveAs(create_filename(histogram_name))
+            histogram.SaveAs(create_filename(self.output_dir,
+                                             histogram_name))
             return engine_data
 
         return None
@@ -63,4 +69,15 @@ class Histogram2dWriterService(Engine):
         return ClaraUtils.build_data_types(EngineDataType.STRING())
 
     def configure(self, engine_data):
-        pass
+        if engine_data.mimetype == Mimetype.STRING():
+            json_object = json.loads(engine_data.get_data())
+            try:
+                self.output_dir = set_output_folder(json_object['output_dir'])
+                return engine_data
+
+            except IOError as e:
+                engine_data.status(EngineStatus.ERROR)
+                engine_data.description(e.message)
+                return engine_data
+
+        return engine_data
