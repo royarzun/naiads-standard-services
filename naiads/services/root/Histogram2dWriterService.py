@@ -1,16 +1,20 @@
 # coding=utf-8
 
 import json
-from time import strftime
-
-from ROOT import TH2F
 
 from clara.base.ClaraUtils import ClaraUtils
 from clara.engine.EngineDataType import EngineDataType, Mimetype
 from clara.engine.Engine import Engine
+from clara.engine.EngineStatus import EngineStatus
+from ROOT import TH2F
+
+from naiads.utils.Utils import create_filename, get_limits, set_output_folder
 
 
 class Histogram2dWriterService(Engine):
+
+    def __init__(self):
+        self.output_dir = "./"
 
     def get_author(self):
         return "Ricardo Oyarzun <oyarzun@jlab.org>"
@@ -25,16 +29,14 @@ class Histogram2dWriterService(Engine):
         return ClaraUtils.build_data_types(EngineDataType.STRING())
 
     def execute(self, engine_data):
-
         if engine_data.mimetype == Mimetype.STRING:
             json_object = json.loads(engine_data.get_data())
 
-            x_limits = self._get_limits(json_object["xAxis"]["centers"])
-            y_limits = self._get_limits(json_object["yAxis"]["centers"])
+            x_limits = get_limits(json_object["xAxis"]["centers"])
+            y_limits = get_limits(json_object["yAxis"]["centers"])
 
             histogram_name = json_object["annotation"]["Title"]
-            histogram = TH2F("histogram",
-                             histogram_name,
+            histogram = TH2F("histogram", histogram_name,
                              100, x_limits[0], x_limits[1],
                              100, y_limits[0], y_limits[1])
 
@@ -44,10 +46,11 @@ class Histogram2dWriterService(Engine):
                                   i_count):
                     histogram.Fill(i, j, val)
 
-            histogram.SaveAs(self._create_filename(histogram_name))
-            return histogram
+            histogram.SaveAs(create_filename(self.output_dir,
+                                             histogram_name))
+            return engine_data
 
-        return engine_data
+        return None
 
     def execute_group(self, inputs):
         pass
@@ -65,11 +68,15 @@ class Histogram2dWriterService(Engine):
         return ClaraUtils.build_data_types(EngineDataType.STRING())
 
     def configure(self, engine_data):
-        pass
+        if engine_data.mimetype == Mimetype.STRING():
+            json_object = json.loads(engine_data.get_data())
+            try:
+                self.output_dir = set_output_folder(json_object['output_dir'])
+                return engine_data
 
-    def _create_filename(self, name_label):
-        timestamp_str = strftime("%Y%m%d%H%M%S")
-        return name_label + "_" + timestamp_str + ".root"
+            except IOError as e:
+                engine_data.status(EngineStatus.ERROR)
+                engine_data.description(e.message)
+                return engine_data
 
-    def _get_limits(self, list_array):
-        return [float(list_array[0]), float(list_array[-1])]
+        return engine_data

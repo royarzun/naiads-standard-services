@@ -1,9 +1,8 @@
 # coding=utf-8
+
 import json
-
-from ROOT import TH2F
-
 from unittest import TestCase
+
 from clara.engine.EngineData import EngineData
 from clara.engine.EngineDataType import Mimetype
 from naiads.services.root.Histogram2dWriterService import Histogram2dWriterService
@@ -3906,10 +3905,5 @@ class TestHistogram1dWriterService(TestCase):
 
     def test_execute(self):
         histo_service = Histogram2dWriterService()
-        self.assertIsInstance(histo_service.execute(self.engine_data), TH2F)
-
-    def test_get_version(self):
-        pass
-
-    def test_configure(self):
-        pass
+        self.assertIsInstance(histo_service.execute(self.engine_data),
+                              EngineData)
