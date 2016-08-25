@@ -6,9 +6,9 @@ from clara.base.ClaraUtils import ClaraUtils
 from clara.engine.EngineDataType import EngineDataType, Mimetype
 from clara.engine.Engine import Engine
 from clara.engine.EngineStatus import EngineStatus
-from ROOT import TH2F
 
-from naiads.utils.Utils import create_filename, get_limits, set_output_folder
+from naiads.services.root.histograms import create_2d_histogram
+from naiads.utils.Utils import set_output_folder
 
 
 class Histogram2dWriterService(Engine):
@@ -30,26 +30,9 @@ class Histogram2dWriterService(Engine):
 
     def execute(self, engine_data):
         if engine_data.mimetype == Mimetype.STRING:
-            json_object = json.loads(engine_data.get_data())
-
-            x_limits = get_limits(json_object["xAxis"]["centers"])
-            y_limits = get_limits(json_object["yAxis"]["centers"])
-
-            histogram_name = json_object["annotation"]["Title"]
-            histogram = TH2F("histogram", histogram_name,
-                             100, x_limits[0], x_limits[1],
-                             100, y_limits[0], y_limits[1])
-
-            for i, i_count in zip(json_object["xAxis"]["centers"],
-                                  json_object["counts"]):
-                for j, val in zip(json_object["yAxis"]["centers"],
-                                  i_count):
-                    histogram.Fill(i, j, val)
-
-            histogram.SaveAs(create_filename(self.output_dir,
-                                             histogram_name))
+            create_2d_histogram(json.loads(engine_data.get_data()),
+                                self.output_dir)
             return engine_data
-
         return None
 
     def execute_group(self, inputs):

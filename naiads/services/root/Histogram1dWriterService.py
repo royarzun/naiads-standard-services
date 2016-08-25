@@ -6,10 +6,9 @@ from clara.base.ClaraUtils import ClaraUtils
 from clara.engine.Engine import Engine
 from clara.engine.EngineStatus import EngineStatus
 from clara.engine.EngineDataType import EngineDataType, Mimetype
-from ROOT import TH1F
 
-from naiads.utils.Utils import create_filename, convert_to_root_array, \
-    get_limits, set_output_folder
+from naiads.services.root.histograms import create_1d_histogram
+from naiads.utils.Utils import set_output_folder
 
 
 class Histogram1dWriterService(Engine):
@@ -31,19 +30,9 @@ class Histogram1dWriterService(Engine):
 
     def execute(self, engine_data):
         if engine_data.mimetype == Mimetype.STRING:
-            json_object = json.loads(engine_data.get_data())
-
-            limits = get_limits(json_object["xAxis"]["centers"])
-            histo_name = json_object["annotation"]["Title"]
-
-            histogram = TH1F("histogram", histo_name, 100,
-                             limits[0], limits[1])
-            histogram.SetContent(convert_to_root_array(json_object["counts"]))
-            histogram.SetError(convert_to_root_array(json_object["errors"]))
-
-            histogram.SaveAs(create_filename(self.output_dir, histo_name))
+            create_1d_histogram(json.loads(engine_data.get_data()),
+                                self.output_dir)
             return engine_data
-
         return None
 
     def execute_group(self, inputs):
