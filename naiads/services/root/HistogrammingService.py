@@ -2,7 +2,6 @@
 
 import json
 
-from clara.base.ClaraUtils import ClaraUtils
 from clara.engine.Engine import Engine
 from clara.engine.EngineDataType import EngineDataType, Mimetype
 from clara.engine.EngineStatus import EngineStatus
@@ -12,38 +11,35 @@ from naiads.services.root.histograms import create_1d_histogram,\
 
 
 class HistogrammingService(Engine):
-    ONE_D_HISTOGRAM = "1D Histogram"
-    TWO_D_HISTOGRAM = "2D Histogram"
-    ONE_D_PROFILE = "1D Profile"
-    TWO_D_PROFILE = "2D Profile"
+    ONE_D_HISTOGRAM = "1D_HISTOGRAM"
+    TWO_D_HISTOGRAM = "2D_HISTOGRAM"
+    ONE_D_PROFILE = "1D_PROFILE"
+    TWO_D_PROFILE = "2D_PROFILE"
 
     def __init__(self):
-        self.output_dir = "./"
+        self.output_dir = "/ramdisk/out/"
 
     def execute_group(self, inputs):
         pass
 
     def get_description(self):
-        return "Histogramming service for NAIADS stats. It creates on demand " \
-               "the right type of Histogram based on the json description"
+        return "Histogramming service for NAIADS stats. It creates on demand" \
+               " the right type of Histogram based on the json description"
 
     def get_input_data_types(self):
-        return ClaraUtils.build_data_types(EngineDataType.JSON())
+        return [EngineDataType.ARRAY_STRING(), EngineDataType.STRING()]
 
     def get_states(self):
         pass
 
     def execute(self, engine_data):
-        if engine_data.mimetype == Mimetype.JSON:
-            try:
-                json_object = json.loads(engine_data.get_data())
-                # First, lets identify what we are dealing with
+        if (engine_data.mimetype == Mimetype.STRING or
+                    engine_data.mimetype == Mimetype.ARRAY_STRING):
+            for data in engine_data.get_data():
+                json_object = json.loads(str(data))
                 self._get_histogram(json_object)
-            except Exception as e:
-                engine_data.status(EngineStatus.ERROR)
-                engine_data.description(e.message)
-                return engine_data
-            return engine_data
+
+        return engine_data
 
     def configure(self, engine_data):
         pass
@@ -61,10 +57,10 @@ class HistogrammingService(Engine):
         return "Ricardo Oyarzun <oyarzun@jlab.org>"
 
     def get_output_data_types(self):
-        return ClaraUtils.build_data_types(EngineDataType.JSON())
+        return [EngineDataType.ARRAY_STRING(), EngineDataType.STRING()]
 
     def _get_histogram(self, json_data):
-        histogram_type = json_data["annotation"]["AidaPath"]
+        histogram_type = json_data["annotation"]["Title"]
 
         if histogram_type.find(self.ONE_D_HISTOGRAM) == 0:
             create_1d_histogram(json_data, self.output_dir)
