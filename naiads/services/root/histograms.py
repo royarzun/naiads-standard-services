@@ -1,33 +1,33 @@
 # coding=utf-8
 
-from ROOT import TH1F, TH2F
+import ROOT
 
-from naiads.utils.Utils import create_filename, get_limits,\
-    convert_to_root_array
-
-
-def create_1d_histogram(json_object, output_dir):
-    limits = get_limits(json_object["xAxis"]["centers"])
-    histogram_name = json_object["annotation"]["Title"]
-
-    histogram = TH1F("histogram", histogram_name, 100, limits[0], limits[1])
-    histogram.SetContent(convert_to_root_array(json_object["counts"]))
-    histogram.SetError(convert_to_root_array(json_object["errors"]))
-    histogram.SaveAs(create_filename(output_dir, histogram_name))
+# from naiads.utils.Utils import create_filename
 
 
-def create_2d_histogram(json_object, output_dir):
-    x_limits = get_limits(json_object["xAxis"]["centers"])
-    y_limits = get_limits(json_object["yAxis"]["centers"])
+def create_1d_histogram(json_object):
+    histogram = ROOT.TH1F("1D_HISTOGRAM", "1D_HISTOGRAM", 100, 0, 10000)
+    for i in json_object["1D_HISTOGRAM"]:
+        histogram.Fill(float(i))
+    buf = ROOT.TBufferFile(ROOT.TBuffer.kWrite)
+    buf.Reset()
+    if not buf.WriteObjectAny(histogram, ROOT.TH1F.Class()):
+        print "failed"
+        return 1
+    return buf.Buffer()
+    # histogram.SaveAs(create_filename(output_dir, "1D_HISTOS"))
 
-    histogram_name = json_object["annotation"]["Title"]
-    histogram = TH2F("histogram", histogram_name,
-                     100, x_limits[0], x_limits[1],
-                     100, y_limits[0], y_limits[1])
 
-    for i, i_count in zip(json_object["xAxis"]["centers"],
-                          json_object["counts"]):
-        for j, val in zip(json_object["yAxis"]["centers"],
-                          i_count):
-            histogram.Fill(i, j, val)
-    histogram.SaveAs(create_filename(output_dir, histogram_name))
+def create_2d_histogram(json_object):
+    histogram = ROOT.TH2F("2D_HISTOGRAM", "2D_HISTOGRAM", 100, 0, 18000, 100, 0, 10000)
+
+    for d in json_object["2D_HISTOGRAM"]:
+        for i, j in d:
+            histogram.Fill(float(i), float(j))
+    buf = ROOT.TBufferFile(ROOT.TBuffer.kWrite)
+    buf.Reset()
+    if not buf.WriteObjectAny(histogram, ROOT.TH1F.Class()):
+        print "failed"
+        return 1
+    return buf
+    # histogram.SaveAs(create_filename(output_dir, "2D_HISTOS"))

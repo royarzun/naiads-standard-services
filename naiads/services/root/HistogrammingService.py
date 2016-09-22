@@ -3,8 +3,8 @@
 import json
 
 from clara.engine.Engine import Engine
+from clara.engine.EngineData import EngineData
 from clara.engine.EngineDataType import EngineDataType, Mimetype
-from clara.engine.EngineStatus import EngineStatus
 
 from naiads.services.root.histograms import create_1d_histogram,\
     create_2d_histogram
@@ -33,13 +33,20 @@ class HistogrammingService(Engine):
         pass
 
     def execute(self, engine_data):
-        if (engine_data.mimetype == Mimetype.STRING or
-                    engine_data.mimetype == Mimetype.ARRAY_STRING):
-            for data in engine_data.get_data():
-                json_object = json.loads(str(data))
-                self._get_histogram(json_object)
+        mt = engine_data.mimetype
+        s_histogram = ""
+        if mt in [Mimetype.ARRAY_STRING, Mimetype.STRING]:
+            try:
+                ds_data = engine_data.get_data()
+                if str(ds_data) in ["NEXT", "END_OF_DATA", "SKIP"]:
+                    return engine_data
+                else:
+                    s_histogram = self._get_histogram(json.loads(str(ds_data)))
+            except Exception as e:
+                print str(engine_data.get_data())
+                raise e
 
-        return engine_data
+        return engine_data.set_data(s_histogram, EngineDataType.STRING())
 
     def configure(self, engine_data):
         pass
@@ -60,15 +67,14 @@ class HistogrammingService(Engine):
         return [EngineDataType.ARRAY_STRING(), EngineDataType.STRING()]
 
     def _get_histogram(self, json_data):
-        histogram_type = json_data["annotation"]["Title"]
 
-        if histogram_type.find(self.ONE_D_HISTOGRAM) == 0:
-            create_1d_histogram(json_data, self.output_dir)
-        elif histogram_type.find(self.TWO_D_HISTOGRAM) == 0:
-            create_2d_histogram(json_data, self.output_dir)
-        elif histogram_type.find(self.ONE_D_PROFILE) == 0:
+        if self.ONE_D_HISTOGRAM in json_data:
+            create_1d_histogram(json_data)
+        elif self.TWO_D_HISTOGRAM in json_data:
+            create_2d_histogram(json_data)
+        elif self.ONE_D_PROFILE in json_data:
             pass
-        elif histogram_type.find(self.TWO_D_PROFILE) == 0:
+        elif self.TWO_D_PROFILE in json_data:
             pass
         else:
             raise Exception("Not recognizable histogram type was found!")
