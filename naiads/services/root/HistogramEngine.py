@@ -3,21 +3,30 @@
 import json
 
 from clara.engine.Engine import Engine
-from clara.engine.EngineData import EngineData
 from clara.engine.EngineDataType import EngineDataType, Mimetype
 
-from naiads.services.root.histograms import create_1d_histogram,\
-    create_2d_histogram
 
-
-class HistogrammingService(Engine):
+class HistogramEngine(Engine):
     ONE_D_HISTOGRAM = "1D_HISTOGRAM"
     TWO_D_HISTOGRAM = "2D_HISTOGRAM"
     ONE_D_PROFILE = "1D_PROFILE"
     TWO_D_PROFILE = "2D_PROFILE"
 
     def __init__(self):
-        self.output_dir = "/ramdisk/out/"
+        self._h1f = ROOT.TH1F()
+        self._h2f = ROOT.TH2F()
+        self._h1f_label = None
+        self._h1f_xbins = None
+        self._h1f_xmin = None
+        self._h1f_xmax = None
+
+        self._h2f_label = None
+        self._h2f_xbins = None
+        self._h2f_xmin = None
+        self._h2f_xmax = None
+        self._h2f_ybins = None
+        self._h2f_ymin = None
+        self._h2f_ymax = None
 
     def execute_group(self, inputs):
         pass
@@ -34,28 +43,49 @@ class HistogrammingService(Engine):
 
     def execute(self, engine_data):
         mt = engine_data.mimetype
-        s_histogram = ""
         if mt in [Mimetype.ARRAY_STRING, Mimetype.STRING]:
             try:
                 ds_data = engine_data.get_data()
                 if str(ds_data) in ["NEXT", "END_OF_DATA", "SKIP"]:
+                    print "skipping..."
                     return engine_data
                 else:
                     s_histogram = self._get_histogram(json.loads(str(ds_data)))
+                    if s_histogram:
+                        engine_data.set_data(s_histogram,
+                                             EngineDataType.STRING())
             except Exception as e:
-                print str(engine_data.get_data())
                 raise e
 
-        return engine_data.set_data(s_histogram, EngineDataType.STRING())
+        return engine_data
 
     def configure(self, engine_data):
-        pass
+        config = engine_data.get_data()
+        self._h1f_label = config[0]
+        self._h1f_xbins = config[1]
+        self._h1f_xmin = config[2]
+        self._h1f_xmax = config[3]
+        self._h2f_label = config[11]
+        self._h2f_xbins = config[12]
+        self._h2f_xmin = config[13]
+        self._h2f_xmax = config[14]
+        self._h2f_ybins = config[15]
+        self._h2f_ymin = config[16]
+        self._h2f_ymax = config[17]
+
+        self._h1f = ROOT.TH1F(self._h1f_label, self._h1f_label,
+                              self._h1f_xbins, self._h1f_xmin, self._h1f_xmax)
+        self._h2f = ROOT.TH2F(self._h2f_label, self._h2f_label,
+                              self._h2f_xbins, self._h2f_xmin, self._h1f_xmax,
+                              self._h2f_ybins, self._h2f_ymin, self._h2f_ymax)
+        return engine_data
 
     def destroy(self):
         pass
 
     def reset(self):
-        pass
+        self._h1f.Reset()
+        self._h2f.Reset()
 
     def get_version(self):
         return "v0.1"
@@ -67,14 +97,20 @@ class HistogrammingService(Engine):
         return [EngineDataType.ARRAY_STRING(), EngineDataType.STRING()]
 
     def _get_histogram(self, json_data):
-
         if self.ONE_D_HISTOGRAM in json_data:
-            create_1d_histogram(json_data)
+            for i in json_data[self.ONE_D_HISTOGRAM]:
+                self._h1f.Fill(float(i))
+
         elif self.TWO_D_HISTOGRAM in json_data:
-            create_2d_histogram(json_data)
+            for d in json_data["2D_HISTOGRAM"]:
+                for i, j in d:
+                    self._h2f.Fill(float(i), float(j))
+
         elif self.ONE_D_PROFILE in json_data:
             pass
+
         elif self.TWO_D_PROFILE in json_data:
             pass
+
         else:
             raise Exception("Not recognizable histogram type was found!")
