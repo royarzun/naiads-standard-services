@@ -1,6 +1,7 @@
 # coding=utf-8
 
 import json
+import ROOT
 
 from clara.engine.Engine import Engine
 from clara.engine.EngineDataType import EngineDataType, Mimetype
@@ -13,8 +14,9 @@ class HistogramEngine(Engine):
     TWO_D_PROFILE = "2D_PROFILE"
 
     def __init__(self):
-        self._h1f = ROOT.TH1F()
-        self._h2f = ROOT.TH2F()
+        self._h1f = None
+        self._h2f = None
+
         self._h1f_label = None
         self._h1f_xbins = None
         self._h1f_xmin = None
@@ -47,13 +49,10 @@ class HistogramEngine(Engine):
             try:
                 ds_data = engine_data.get_data()
                 if str(ds_data) in ["NEXT", "END_OF_DATA", "SKIP"]:
-                    print "skipping..."
                     return engine_data
                 else:
-                    s_histogram = self._get_histogram(json.loads(str(ds_data)))
-                    if s_histogram:
-                        engine_data.set_data(s_histogram,
-                                             EngineDataType.STRING())
+                    self._get_histogram(json.loads(str(ds_data)))
+
             except Exception as e:
                 raise e
 
@@ -65,6 +64,7 @@ class HistogramEngine(Engine):
         self._h1f_xbins = config[1]
         self._h1f_xmin = config[2]
         self._h1f_xmax = config[3]
+
         self._h2f_label = config[11]
         self._h2f_xbins = config[12]
         self._h2f_xmin = config[13]
@@ -74,10 +74,13 @@ class HistogramEngine(Engine):
         self._h2f_ymax = config[17]
 
         self._h1f = ROOT.TH1F(self._h1f_label, self._h1f_label,
-                              self._h1f_xbins, self._h1f_xmin, self._h1f_xmax)
+                              int(self._h1f_xbins),
+                              int(self._h1f_xmin), int(self._h1f_xmax))
         self._h2f = ROOT.TH2F(self._h2f_label, self._h2f_label,
-                              self._h2f_xbins, self._h2f_xmin, self._h1f_xmax,
-                              self._h2f_ybins, self._h2f_ymin, self._h2f_ymax)
+                              int(self._h2f_xbins),
+                              int(self._h2f_xmin), int(self._h1f_xmax),
+                              int(self._h2f_ybins),
+                              int(self._h2f_ymin), int(self._h2f_ymax))
         return engine_data
 
     def destroy(self):
@@ -101,16 +104,15 @@ class HistogramEngine(Engine):
             for i in json_data[self.ONE_D_HISTOGRAM]:
                 self._h1f.Fill(float(i))
 
-        elif self.TWO_D_HISTOGRAM in json_data:
-            for d in json_data["2D_HISTOGRAM"]:
-                for i, j in d:
-                    self._h2f.Fill(float(i), float(j))
+        if self.TWO_D_HISTOGRAM in json_data:
+            for d in json_data[self.TWO_D_HISTOGRAM]:
+                self._h2f.Fill(float(d[0]), float(d[1]))
 
-        elif self.ONE_D_PROFILE in json_data:
-            pass
+        if self.ONE_D_PROFILE in json_data:
+            return ""
 
-        elif self.TWO_D_PROFILE in json_data:
-            pass
+        if self.TWO_D_PROFILE in json_data:
+            return ""
 
         else:
             raise Exception("Not recognizable histogram type was found!")
