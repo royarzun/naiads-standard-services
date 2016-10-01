@@ -2,8 +2,7 @@
 
 ## Services
 
--   `naiads.services.root.Histogram1dWriterService`
--   `naiads.services.root.Histogram2dWriterService`
+-   `naiads.services.root.HistogramEngine`
 
 ## Requirements
 
